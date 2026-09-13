@@ -146,15 +146,22 @@
   .btn-ghost{color:var(--ivory);}
   .btn-ghost:hover{border-color:var(--ivory-dim);}
 
-  /* ---------- reveal ---------- */
-  .reveal{opacity:0;transform:translateY(36px);transition:opacity 1s cubic-bezier(.16,.8,.24,1), transform 1s cubic-bezier(.16,.8,.24,1);}
-  .reveal.in{opacity:1;transform:translateY(0);}
+  /* ---------- reveal (3D) ---------- */
+  .view{perspective:1400px;}
+  .reveal{
+    opacity:0;
+    transform:translateY(46px) translateZ(-60px) rotateX(8deg);
+    transform-origin:bottom center;
+    transition:opacity 1s cubic-bezier(.16,.8,.24,1), transform 1s cubic-bezier(.16,.8,.24,1);
+    will-change:transform, opacity;
+  }
+  .reveal.in{opacity:1;transform:translateY(0) translateZ(0) rotateX(0deg);}
 
   /* ---------- hero ---------- */
-  .hero{min-height:96svh;display:flex;flex-direction:column;justify-content:center;padding-top:80px;}
-  .hero-visual{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:0;}
+  .hero{min-height:96svh;display:flex;flex-direction:column;justify-content:center;padding-top:80px;perspective:1200px;}
+  .hero-visual{position:absolute;inset:-10%;pointer-events:none;overflow:hidden;z-index:0;will-change:transform;}
   #heroCanvas{width:100%;height:100%;display:block;opacity:.55;}
-  .hero-inner{position:relative;z-index:1;}
+  .hero-inner{position:relative;z-index:1;will-change:transform;}
   .scroll-cue{margin-top:90px;font-size:11px;letter-spacing:.14em;color:var(--ivory-faint);display:flex;align-items:center;gap:12px;}
   .scroll-cue .line{width:1px;height:34px;background:var(--ivory-faint);position:relative;overflow:hidden;}
   .scroll-cue .line::after{content:'';position:absolute;left:0;top:-100%;width:100%;height:100%;background:var(--gold);animation:cue-drop 2s ease-in-out infinite;}
@@ -171,6 +178,16 @@
   .ind-strip{display:flex;flex-wrap:wrap;gap:16px;margin-top:60px;}
   .ind-chip{border:1px solid var(--hair);padding:10px 20px;font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--ivory-faint);transition:color .4s ease, border-color .4s ease;}
   .ind-chip.on{color:var(--gold);border-color:var(--gold-dim);}
+
+  /* ---------- pinned scrollytelling ---------- */
+  .pin-wrap{position:relative;height:420vh;}
+  .pin-stage{position:sticky;top:0;min-height:100svh;display:flex;flex-direction:column;justify-content:center;}
+  @media (max-width:720px){.pin-wrap{height:340vh;}}
+  #pinHeadline, #pinSub{transition:opacity .35s ease, transform .35s ease;}
+  #tPinTag, #tPinHead, #tPinSub, #tPinSvg{transition:opacity .35s ease;}
+  .pin-dots{display:flex;gap:8px;margin-top:44px;}
+  .pin-dots i{width:22px;height:2px;background:var(--hair);display:block;transition:background .3s ease;}
+  .pin-dots i.on{background:var(--gold);}
 
   .cta-final{text-align:left;}
   .cta-final .display{max-width:720px;}
@@ -295,17 +312,19 @@
       </div>
     </div>
 
-    <div class="section-pad idea">
-      <div class="wrap">
-        <div class="eyebrow mono">Reading price</div>
-        <h2 class="display-sm reveal">Read the market.</h2>
-        <p class="sub reveal">Five tools cover most of what shows up on a serious trader's chart — momentum, trend, volatility and volume, each describing what price has already done.</p>
-        <div class="ind-strip" id="indStrip">
-          <div class="ind-chip" data-i="0">RSI</div>
-          <div class="ind-chip" data-i="1">MACD</div>
-          <div class="ind-chip" data-i="2">EMA</div>
-          <div class="ind-chip" data-i="3">ATR</div>
-          <div class="ind-chip" data-i="4">VWAP</div>
+    <div class="pin-wrap" id="pinWrap">
+      <div class="pin-stage">
+        <div class="wrap">
+          <div class="eyebrow mono">Reading price</div>
+          <h2 class="display-sm" id="pinHeadline">Read the market.</h2>
+          <p class="sub" id="pinSub">Five tools cover most of what shows up on a serious trader's chart — momentum, trend, volatility and volume, each describing what price has already done.</p>
+          <div class="ind-strip" id="indStrip">
+            <div class="ind-chip" data-i="0">RSI</div>
+            <div class="ind-chip" data-i="1">MACD</div>
+            <div class="ind-chip" data-i="2">EMA</div>
+            <div class="ind-chip" data-i="3">ATR</div>
+            <div class="ind-chip" data-i="4">VWAP</div>
+          </div>
         </div>
       </div>
     </div>
@@ -352,7 +371,17 @@
       <p class="sub">Six disciplines carry most of what a trader actually uses — the rest is noise.</p>
     </div>
 
-    <div class="wrap" id="tradingSteps"></div>
+    <div class="pin-wrap" id="tradingPinWrap" style="height:640vh;">
+      <div class="pin-stage">
+        <div class="wrap">
+          <div class="tag mono" id="tPinTag"></div>
+          <h2 class="display-sm" id="tPinHead" style="margin-top:16px;"></h2>
+          <p class="sub" id="tPinSub" style="margin-top:16px;"></p>
+          <div class="t-visual"><svg id="tPinSvg" viewBox="0 0 400 60" preserveAspectRatio="none"><polyline id="tPinPoly" fill="none" style="stroke:var(--gold)" stroke-width="1.3"/></svg></div>
+          <div class="pin-dots" id="tPinDots"></div>
+        </div>
+      </div>
+    </div>
 
     <div class="wrap section-pad" style="padding-top:0;">
       <div class="eyebrow mono">Risk management</div>
@@ -526,18 +555,10 @@ assets.forEach(function(a,i){
   marketsList.appendChild(block);
 });
 
-/* ---------------- render trading steps ---------------- */
-var tradingWrap = document.getElementById('tradingSteps');
-tradingSteps.forEach(function(s){
-  var el = document.createElement('div');
-  el.className = 't-step';
-  el.innerHTML =
-    '<div class="tag mono reveal">'+s.tag+'</div>'+
-    '<h2 class="display-sm reveal">'+s.title+'</h2>'+
-    '<p class="sub reveal">'+s.body+'</p>'+
-    '<div class="t-visual reveal"><svg viewBox="0 0 400 60" preserveAspectRatio="none"><polyline points="'+sparkPath(Math.random()*10)+'" fill="none" style="stroke:var(--gold)" stroke-width="1.3" transform="scale(1.176,0.94)"/></svg></div>';
-  tradingWrap.appendChild(el);
-});
+/* ---------------- render trading pin dots ---------------- */
+var tDots = document.getElementById('tPinDots');
+tradingSteps.forEach(function(){ var i=document.createElement('i'); tDots.appendChild(i); });
+var tDotEls = tDots.querySelectorAll('i');
 
 /* ---------------- price ticking (background, feeds markets page) ---------------- */
 function fmt(n,d){ return n.toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d}); }
@@ -573,6 +594,10 @@ function setActive(name){
   history.replaceState(null,'','#'+name);
   refreshReveal();
   document.getElementById('navLinks').classList.remove('mobile-open');
+  requestAnimationFrame(function(){
+    if (window.__updateIndPin) window.__updateIndPin();
+    if (window.__updateTradingPin) window.__updateTradingPin();
+  });
 }
 
 document.querySelectorAll('[data-view]').forEach(function(el){
@@ -593,12 +618,36 @@ window.addEventListener('scroll', function(){
   navEl.classList.toggle('scrolled', window.scrollY > 40);
 }, {passive:true});
 
+/* ---------------- hero parallax on scroll ---------------- */
+var heroVisual = document.querySelector('.hero-visual');
+var heroInner = document.querySelector('.hero-inner');
+var parallaxTicking = false;
+function onParallaxScroll(){
+  if (parallaxTicking) return;
+  parallaxTicking = true;
+  requestAnimationFrame(function(){
+    var y = window.scrollY;
+    if (heroVisual) heroVisual.style.transform = 'translateY(' + (y*0.25) + 'px) translateZ(-140px) scale(1.12)';
+    if (heroInner) heroInner.style.transform = 'translateY(' + (y*-0.06) + 'px) translateZ(0)';
+    parallaxTicking = false;
+  });
+}
+window.addEventListener('scroll', onParallaxScroll, {passive:true});
+onParallaxScroll();
+
 /* ---------------- scroll reveal ---------------- */
 var io = new IntersectionObserver(function(entries){
   entries.forEach(function(e){ if(e.isIntersecting) e.target.classList.add('in'); });
 }, {threshold:0.16, rootMargin:'0px 0px -60px 0px'});
 function refreshReveal(){
-  document.querySelectorAll('.view.active .reveal').forEach(function(el){ io.observe(el); });
+  document.querySelectorAll('.view.active .reveal').forEach(function(el, i){
+    if(!el.dataset.tilt){
+      var dir = i % 2 === 0 ? 1 : -1;
+      el.style.transformOrigin = dir > 0 ? 'bottom left' : 'bottom right';
+      el.dataset.tilt = '1';
+    }
+    io.observe(el);
+  });
 }
 
 /* ---------------- home progressive highlight (assets / indicators) ---------------- */
@@ -615,7 +664,97 @@ function progressiveHighlight(container, itemSelector){
   items.forEach(function(it){ obs.observe(it); });
 }
 progressiveHighlight(document.getElementById('assetRow'), '.asset');
-progressiveHighlight(document.getElementById('indStrip'), '.ind-chip');
+
+/* ---------------- pinned indicator scrollytelling (home) ---------------- */
+var indDefs = [
+  { name:'RSI', head:'Momentum, simplified.', sub:'The Relative Strength Index moves between 0 and 100. Above 70 typically reads overbought, below 30 oversold.' },
+  { name:'MACD', head:'Where two averages disagree.', sub:'Moving Average Convergence Divergence tracks the relationship between two EMAs — crossovers flag momentum shifts.' },
+  { name:'EMA', head:'The average that remembers recently.', sub:'The Exponential Moving Average weights recent candles more heavily than a simple average.' },
+  { name:'ATR', head:'How far price actually moves.', sub:'Average True Range measures volatility in absolute price units — often used to set stop-loss distance.' },
+  { name:'VWAP', head:'The price the market agreed on.', sub:'Volume Weighted Average Price marks where most of the day\u2019s volume traded.' }
+];
+(function(){
+  var wrap = document.getElementById('pinWrap');
+  var chips = document.querySelectorAll('#indStrip .ind-chip');
+  var headline = document.getElementById('pinHeadline');
+  var subEl = document.getElementById('pinSub');
+  var defaultHead = 'Read the market.';
+  var defaultSub = subEl ? subEl.textContent : '';
+  var lastIndex = -1;
+  var ticking = false;
+
+  function update(){
+    ticking = false;
+    if (!wrap || !wrap.offsetParent) return;
+    var rect = wrap.getBoundingClientRect();
+    var vh = window.innerHeight;
+    var total = rect.height - vh;
+    var progress = total > 0 ? Math.min(1, Math.max(0, -rect.top / total)) : 0;
+    var n = indDefs.length;
+    var idx = -1;
+    if (progress > 0.02) idx = Math.min(n - 1, Math.floor(progress * n));
+
+    if (idx !== lastIndex) {
+      lastIndex = idx;
+      chips.forEach(function(c, i){ c.classList.toggle('on', i <= idx); });
+      var d = idx >= 0 ? indDefs[idx] : null;
+      headline.style.opacity = 0;
+      subEl.style.opacity = 0;
+      setTimeout(function(){
+        headline.textContent = d ? d.name + ' — ' + d.head : defaultHead;
+        subEl.textContent = d ? d.sub : defaultSub;
+        headline.style.opacity = 1;
+        subEl.style.opacity = 1;
+      }, 160);
+    }
+  }
+  window.addEventListener('scroll', function(){
+    if (!ticking) { ticking = true; requestAnimationFrame(update); }
+  }, {passive:true});
+  update();
+  window.__updateIndPin = update;
+})();
+
+/* ---------------- pinned trading steps scrollytelling ---------------- */
+(function(){
+  var wrap = document.getElementById('tradingPinWrap');
+  var tagEl = document.getElementById('tPinTag');
+  var headEl = document.getElementById('tPinHead');
+  var subEl = document.getElementById('tPinSub');
+  var poly = document.getElementById('tPinPoly');
+  var lastIndex = -1;
+  var ticking = false;
+  var paths = tradingSteps.map(function(_, i){ return sparkPath(i * 4 + 1); });
+
+  function update(){
+    ticking = false;
+    if (!wrap || !wrap.offsetParent) return;
+    var rect = wrap.getBoundingClientRect();
+    var vh = window.innerHeight;
+    var total = rect.height - vh;
+    var progress = total > 0 ? Math.min(1, Math.max(0, -rect.top / total)) : 0;
+    var n = tradingSteps.length;
+    var idx = Math.min(n - 1, Math.floor(progress * n));
+    if (idx !== lastIndex) {
+      lastIndex = idx;
+      var s = tradingSteps[idx];
+      tagEl.style.opacity = 0; headEl.style.opacity = 0; subEl.style.opacity = 0; poly.style.opacity = 0;
+      setTimeout(function(){
+        tagEl.textContent = s.tag;
+        headEl.textContent = s.title;
+        subEl.textContent = s.body;
+        poly.setAttribute('points', paths[idx]);
+        tagEl.style.opacity = 1; headEl.style.opacity = 1; subEl.style.opacity = 1; poly.style.opacity = 1;
+      }, 160);
+      tDotEls.forEach(function(d, i){ d.classList.toggle('on', i === idx); });
+    }
+  }
+  window.addEventListener('scroll', function(){
+    if (!ticking) { ticking = true; requestAnimationFrame(update); }
+  }, {passive:true});
+  update();
+  window.__updateTradingPin = update;
+})();
 
 /* ---------------- hero canvas: subtle abstract market lines ---------------- */
 var canvas = document.getElementById('heroCanvas');
